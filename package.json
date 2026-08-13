@@ -1,26 +1,17 @@
 {
-  "name": "analizador-tesis-ia",
+  "name": "asesor-tesis-ia",
   "version": "1.0.0",
-  "description": "Sistema de análisis y evaluación de tesis con inteligencia artificial para catedráticos",
-  "main": "index.js",
+  "description": "Asesor de tesis local portable",
+  "main": "main.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "build": "echo 'Proyecto listo para producción'"
+    "start": "electron .",
+    "build:portable": "electron-builder --win portable"
   },
-  "keywords": ["tesis", "ia", "pdf", "analizador", "vercel"],
-  "author": "Adolfo Bustamante",
-  "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.20.0",
-    "@google/generative-ai": "^0.12.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "multer": "^1.4.5-lts.1",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
   }
 }
