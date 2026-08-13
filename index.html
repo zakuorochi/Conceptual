@@ -395,37 +395,113 @@
     </section>
   </main>
 
-  <script>
-    // Función para desplegar/plegar cada uno de los 10 acordeones
-    function toggleAccordion(button) {
-      const item = button.parentElement;
-      item.classList.toggle('active');
-    }
+<script>
+  let currentAnalysisData = null;
 
-    // Manejo simulado de subida de archivos
-    function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (file) {
-        document.getElementById('current-doc-title').innerText = file.name;
-        
-        // Agregar al historial de la izquierda
-        const historyList = document.getElementById('history-list');
-        const newItem = document.createElement('li');
-        newItem.className = 'history-item';
-        newItem.innerHTML = `
-          <div class="title">${file.name}</div>
-          <div class="date">Analizado: Justo ahora</div>
-        `;
-        historyList.prepend(newItem);
+  // Manejo visual de desplegar/plegar acordeón
+  function toggleAccordion(button) {
+    const item = button.parentElement;
+    item.classList.toggle('active');
+  }
 
-        // Actualizar badges
-        document.querySelectorAll('.badge').forEach(badge => {
-          badge.innerText = 'Analizado';
+  // Leer PDF y enviarlo a analizar a Runware (Kimi K2.6)
+  async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('current-doc-title').innerText = file.name + " (Procesando con Kimi K2.6...)";
+    
+    // Cambiar badges a estado de procesamiento
+    document.querySelectorAll('.badge').forEach(badge => {
+      badge.innerText = 'Analizando...';
+      badge.style.background = '#fef08a';
+      badge.style.color = '#854d0e';
+    });
+
+    try {
+      // Convertir archivo a Base64
+      const base64 = await convertFileToBase64(file);
+
+      // Petición a nuestro backend en Vercel
+      const response = await fetch('/api/analizar-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pdfBase64: base64.split(',')[1],
+          fileName: file.name
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "Error en el servidor");
+
+      currentAnalysisData = result.analysis;
+      document.getElementById('current-doc-title').innerText = file.name;
+
+      // Mapear los 10 componentes del JSON a los 10 acordeones en pantalla
+      const sectionMapping = {
+        '1. Introducción': currentAnalysisData.introduccion,
+        '2. Problema': currentAnalysisData.problema,
+        '3. Realidad Problemática': currentAnalysisData.realidadProblematica,
+        '4. Marco Teórico': currentAnalysisData.marcoTeorico,
+        '5. Metodología': currentAnalysisData.metodologia,
+        '6. Resultados': currentAnalysisData.resultados,
+        '7. Análisis': currentAnalysisData.analisis,
+        '8. Discusión': currentAnalysisData.discusion,
+        '9. Conclusiones': currentAnalysisData.conclusiones,
+        '10. Recomendaciones': currentAnalysisData.recomendaciones
+      };
+
+      // Actualizar el DOM de los acordeones con el contenido renderizado
+      const items = document.querySelectorAll('.accordion-item');
+      items.forEach(item => {
+        const headerText = item.querySelector('.accordion-header').innerText.split('\n')[0].trim();
+        const contentDiv = item.querySelector('.accordion-content');
+        const badge = item.querySelector('.badge');
+
+        if (sectionMapping[headerText]) {
+          // Reemplazar saltos de línea por párrafos HTML simples
+          contentDiv.innerHTML = sectionMapping[headerText].replace(/\n/g, '<br>');
+          badge.innerText = 'Listo';
           badge.style.background = '#dcfce7';
           badge.style.color = '#166534';
-        });
-      }
+        }
+      });
+
+      // Agregar al Historial Izquierdo
+      const historyList = document.getElementById('history-list');
+      const newItem = document.createElement('li');
+      newItem.className = 'history-item';
+      newItem.innerHTML = `
+        <div class="title">${file.name}</div>
+        <div class="date">Analizado: Justo ahora</div>
+      `;
+      historyList.prepend(newItem);
+
+      // Ocultar zona vacía inicial
+      document.getElementById('drop-zone').style.display = 'none';
+
+    } catch (err) {
+      alert("Ocurrió un error al analizar la tesis: " + err.message);
+      document.getElementById('current-doc-title').innerText = "Error en el análisis";
+      document.querySelectorAll('.badge').forEach(badge => {
+        badge.innerText = 'Error';
+        badge.style.background = '#fecaca';
+        badge.style.color = '#991b1b';
+      });
     }
-  </script>
+  }
+
+  // Función auxiliar para lectura de archivos
+  function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  }
+</script>
 </body>
 </html>
