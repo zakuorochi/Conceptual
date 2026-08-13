@@ -418,23 +418,18 @@
       badge.style.color = '#854d0e';
     });
 
-    try {
+  try {
       // Convertir archivo a Base64
       const base64 = await convertFileToBase64(file);
+      const pdfBase64 = base64.split(',')[1];
 
-      // Petición a nuestro backend en Vercel
-      const response = await fetch('/api/analizar-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pdfBase64: base64.split(',')[1],
-          fileName: file.name
-        })
+      // EN LUGAR DE FETCH, LLAMAMOS AL SISTEMA LOCAL VÍA ELECTRON:
+      const result = await window.electronAPI.analizarTesis({ 
+        pdfBase64: pdfBase64, 
+        fileName: file.name 
       });
 
-      const result = await response.json();
-
-      if (!response.ok) throw new Error(result.error || "Error en el servidor");
+      if (!result.success) throw new Error(result.error);
 
       currentAnalysisData = result.analysis;
       document.getElementById('current-doc-title').innerText = file.name;
@@ -491,17 +486,6 @@
         badge.style.color = '#991b1b';
       });
     }
-  }
-
-  // Función auxiliar para lectura de archivos
-  function convertFileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  }
 </script>
 </body>
 </html>
