@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analizador de Tesis - Panel Catedrático</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --bg-sidebar: #1e293b;
+      --text-sidebar: #f1f5f9;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --border-color: #e2e8f0;
+      --card-bg: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    /* --- SIDEBAR IZQUIERDO --- */
+    .sidebar {
+      width: 320px;
+      background-color: var(--bg-sidebar);
+      color: var(--text-sidebar);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #334155;
+    }
+
+    .brand {
+      padding: 24px 20px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      border-bottom: 1px solid #334155;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .upload-section {
+      padding: 20px;
+      border-bottom: 1px solid #334155;
+    }
+
+    .btn-upload {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.2s ease;
+    }
+
+    .btn-upload:hover {
+      background-color: var(--accent-hover);
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    .history-section {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #94a3b8;
+      margin-bottom: 12px;
+    }
+
+    .history-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      padding: 12px;
+      background: #334155;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .history-item:hover {
+      background: #475569;
+    }
+
+    .history-item .title {
+      font-weight: 500;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item .date {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    /* --- PANEL DERECHO (WORKSPACE) --- */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      height: 64px;
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .doc-info {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .btn-print {
+      padding: 10px 18px;
+      background-color: #0f172a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-print:hover {
+      background-color: #334155;
+    }
+
+    .workspace {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    /* Estado inicial previo a la subida */
+    .empty-state {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 60px;
+      text-align: center;
+      background: white;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    /* Acordeón de 10 botones */
+    .accordion-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .accordion-item {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .accordion-header {
+      width: 100%;
+      padding: 16px 20px;
+      background: none;
+      border: none;
+      text-align: left;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    .accordion-header:hover {
+      background-color: #f1f5f9;
+    }
+
+    .accordion-header .badge {
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      background: #e2e8f0;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .accordion-content {
+      display: none;
+      padding: 20px;
+      border-top: 1px solid var(--border-color);
+      background-color: #fafafa;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #334155;
+    }
+
+    .accordion-item.active .accordion-content {
+      display: block;
+    }
+
+    .accordion-item.active .accordion-header {
+      background-color: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR IZQUIERDO -->
+  <aside class="sidebar">
+    <div class="brand">
+      📄 AsesorTesis.ia
+    </div>
+
+    <div class="upload-section">
+      <button class="btn-upload" onclick="document.getElementById('file-input').click()">
+        <span>📁</span> Subir Tesis (PDF)
+      </button>
+      <input type="file" id="file-input" accept=".pdf,.doc,.docx" onchange="handleFileUpload(event)">
+    </div>
+
+    <div class="history-section">
+      <div class="section-title">Historial de Tesis</div>
+      <ul class="history-list" id="history-list">
+        <li class="history-item">
+          <div class="title">jorgepereztesis1.0.pdf</div>
+          <div class="date">Analizado: Hace 2 horas</div>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- PANEL DERECHO (WORKSPACE) -->
+  <main class="main-content">
+    <header class="top-bar">
+      <div class="doc-info" id="current-doc-title">Proyecto sin título</div>
+      <button class="btn-print" onclick="window.print()">
+        <span>🖨️</span> Imprimir / Exportar
+      </button>
+    </header>
+
+    <section class="workspace">
+      <!-- Mensaje guía -->
+      <div class="empty-state" id="drop-zone">
+        <h3>Sube un documento en PDF para iniciar el análisis</h3>
+        <p>Los 10 bloques de evaluación se activarán una vez procesado el texto.</p>
+      </div>
+
+      <!-- LOS 10 BOTONES DE ANÁLISIS DE SECCIONES -->
+      <div class="accordion-container" id="analysis-container">
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            1. Introducción <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Aquí se desplegará el análisis correspondiente a la Introducción de la tesis.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            2. Problema <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Aquí se desplegará el análisis del Problema planteado.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            3. Realidad Problemática <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Aquí se desplegará la evaluación del contexto de la Realidad Problemática.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            4. Marco Teórico <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Análisis de fuentes, autores y solidez teórica.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            5. Metodología <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Evaluación del enfoque, diseño metodológico e instrumentos.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            6. Resultados <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Desglose de los hallazgos tabulados o datos recolectados.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            7. Análisis <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Análisis crítico de los datos presentados por el investigador.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            8. Discusión <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Contraste de resultados frente a la literatura previa.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            9. Conclusiones <span class="badge">Pendiente</span>
+          </button>
+
+          <div class="accordion-content">
+            Verificación del cumplimiento de los objetivos planteados.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-header" onclick="toggleAccordion(this)">
+            10. Recomendaciones <span class="badge">Pendiente</span>
+          </button>
+          <div class="accordion-content">
+            Sugerencias de prospectiva y aportes prácticos de la tesis.
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Función para desplegar/plegar cada uno de los 10 acordeones
+    function toggleAccordion(button) {
+      const item = button.parentElement;
+      item.classList.toggle('active');
+    }
+
+    // Manejo simulado de subida de archivos
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        document.getElementById('current-doc-title').innerText = file.name;
+        
+        // Agregar al historial de la izquierda
+        const historyList = document.getElementById('history-list');
+        const newItem = document.createElement('li');
+        newItem.className = 'history-item';
+        newItem.innerHTML = `
+          <div class="title">${file.name}</div>
+          <div class="date">Analizado: Justo ahora</div>
+        `;
+        historyList.prepend(newItem);
+
+        // Actualizar badges
+        document.querySelectorAll('.badge').forEach(badge => {
+          badge.innerText = 'Analizado';
+          badge.style.background = '#dcfce7';
+          badge.style.color = '#166534';
+        });
+      }
+    }
+  </script>
+</body>
+</html>
