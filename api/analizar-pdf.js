@@ -30,7 +30,7 @@ CRITICAL INSTRUCTIONS:
     if (!GEMINI_API_KEY) throw new Error("API Key no configurada");
 
     // NOTA: Si el modelo 3.5-flash-lite te da error 404, usa gemini-1.5-flash que es la versión de producción actual
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`;
 
     const geminiPayload = {
       systemInstruction: {
