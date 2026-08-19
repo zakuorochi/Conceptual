@@ -267,16 +267,13 @@
       <button class="btn-upload" onclick="document.getElementById('file-input').click()">
         <span>📁</span> Subir Tesis (PDF)
       </button>
-      <input type="file" id="file-input" accept=".pdf,.doc,.docx" onchange="handleFileUpload(event)">
+      <input type="file" id="file-input" accept=".pdf" onchange="handleFileUpload(event)">
     </div>
 
     <div class="history-section">
       <div class="section-title">Historial de Tesis</div>
       <ul class="history-list" id="history-list">
-        <li class="history-item">
-          <div class="title">jorgepereztesis1.0.pdf</div>
-          <div class="date">Analizado: Hace 2 horas</div>
-        </li>
+        <!-- El historial se puebla dinámicamente -->
       </ul>
     </div>
   </aside>
@@ -304,91 +301,70 @@
           <button class="accordion-header" onclick="toggleAccordion(this)">
             1. Introducción <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Aquí se desplegará el análisis correspondiente a la Introducción de la tesis.
-          </div>
+          <div class="accordion-content">Aquí se desplegará el análisis correspondiente a la Introducción de la tesis.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             2. Problema <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Aquí se desplegará el análisis del Problema planteado.
-          </div>
+          <div class="accordion-content">Aquí se desplegará el análisis del Problema planteado.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             3. Realidad Problemática <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Aquí se desplegará la evaluación del contexto de la Realidad Problemática.
-          </div>
+          <div class="accordion-content">Aquí se desplegará la evaluación del contexto de la Realidad Problemática.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             4. Marco Teórico <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Análisis de fuentes, autores y solidez teórica.
-          </div>
+          <div class="accordion-content">Análisis de fuentes, autores y solidez teórica.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             5. Metodología <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Evaluación del enfoque, diseño metodológico e instrumentos.
-          </div>
+          <div class="accordion-content">Evaluación del enfoque, diseño metodológico e instrumentos.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             6. Resultados <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Desglose de los hallazgos tabulados o datos recolectados.
-          </div>
+          <div class="accordion-content">Desglose de los hallazgos tabulados o datos recolectados.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             7. Análisis <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Análisis crítico de los datos presentados por el investigador.
-          </div>
+          <div class="accordion-content">Análisis crítico de los datos presentados por el investigador.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             8. Discusión <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Contraste de resultados frente a la literatura previa.
-          </div>
+          <div class="accordion-content">Contraste de resultados frente a la literatura previa.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             9. Conclusiones <span class="badge">Pendiente</span>
           </button>
-
-          <div class="accordion-content">
-            Verificación del cumplimiento de los objetivos planteados.
-          </div>
+          <div class="accordion-content">Verificación del cumplimiento de los objetivos planteados.</div>
         </div>
 
         <div class="accordion-item">
           <button class="accordion-header" onclick="toggleAccordion(this)">
             10. Recomendaciones <span class="badge">Pendiente</span>
           </button>
-          <div class="accordion-content">
-            Sugerencias de prospectiva y aportes prácticos de la tesis.
-          </div>
+          <div class="accordion-content">Sugerencias de prospectiva y aportes prácticos de la tesis.</div>
         </div>
 
       </div>
@@ -404,12 +380,22 @@
     item.classList.toggle('active');
   }
 
-  // Leer PDF y enviarlo a analizar a Runware (Kimi K2.6)
+  // Convertir archivo a Base64
+  function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  // Leer PDF y enviarlo al backend Vercel (/api/analizar-pdf)
   async function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    document.getElementById('current-doc-title').innerText = file.name + " (Procesando con Kimi K2.6...)";
+    document.getElementById('current-doc-title').innerText = file.name + " (Procesando...)";
     
     // Cambiar badges a estado de procesamiento
     document.querySelectorAll('.badge').forEach(badge => {
@@ -418,18 +404,27 @@
       badge.style.color = '#854d0e';
     });
 
-  try {
-      // Convertir archivo a Base64
+    try {
       const base64 = await convertFileToBase64(file);
       const pdfBase64 = base64.split(',')[1];
 
-      // EN LUGAR DE FETCH, LLAMAMOS AL SISTEMA LOCAL VÍA ELECTRON:
-      const result = await window.electronAPI.analizarTesis({ 
-        pdfBase64: pdfBase64, 
-        fileName: file.name 
+      // Petición al Serverless Function en Vercel
+      const response = await fetch('/api/analizar-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pdfBase64: pdfBase64,
+          fileName: file.name
+        })
       });
 
-      if (!result.success) throw new Error(result.error);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.details?.error || "Error al procesar el PDF");
+      }
 
       currentAnalysisData = result.analysis;
       document.getElementById('current-doc-title').innerText = file.name;
@@ -456,7 +451,6 @@
         const badge = item.querySelector('.badge');
 
         if (sectionMapping[headerText]) {
-          // Reemplazar saltos de línea por párrafos HTML simples
           contentDiv.innerHTML = sectionMapping[headerText].replace(/\n/g, '<br>');
           badge.innerText = 'Listo';
           badge.style.background = '#dcfce7';
@@ -486,6 +480,7 @@
         badge.style.color = '#991b1b';
       });
     }
+  }
 </script>
 </body>
 </html>
