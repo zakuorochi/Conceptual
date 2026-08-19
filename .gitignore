@@ -1,0 +1,10 @@
+# Dependencias de Node
+node_modules/
+
+# Archivos de entorno local (¡Nunca subir claves a internet!)
+.env
+.env.local
+
+# Archivos basura del sistema operativo
+.DS_Store
+Thumbs.db
