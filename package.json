@@ -1,17 +1,11 @@
 {
   "name": "asesor-tesis-ia",
   "version": "1.0.0",
-  "description": "Asesor de tesis local portable",
-  "main": "main.js",
+  "description": "Asesor de tesis web con Vercel y Runware",
   "scripts": {
-    "start": "electron .",
-    "build:portable": "electron-builder --win portable"
+    "dev": "vercel dev"
   },
   "dependencies": {
     "pdf-parse": "^1.1.1"
-  },
-  "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
   }
 }
