@@ -227,7 +227,7 @@
   </main>
 
 <script>
-  let currentAnalysisData = null;
+let currentAnalysisData = null;
   const secciones = [
     { id: 'introduccion', titulo: '1. Introducción' },
     { id: 'problema', titulo: '2. Problema' },
@@ -370,48 +370,7 @@
     }
   }
 
-  // Recolectar datos y enviar al nuevo endpoint
-  async function generarVeredicto() {
-    const btn = document.getElementById('btn-generar');
-    btn.innerText = "Redactando informe...";
-    btn.classList.remove('active'); // Bloquear para evitar doble clic
-
-    // Recolectar las 10 calificaciones
-    let calificaciones = {};
-    secciones.forEach(sec => {
-      const valor = document.querySelector(`input[name="${sec.id}"]:checked`).value;
-      calificaciones[sec.id] = parseInt(valor);
-    });
-
-    const payload = {
-      analisisOriginal: currentAnalysisData,
-      calificaciones: calificaciones
-    };
-
-    try {
-      const response = await fetch('/api/generar-calificacion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error("Fallo al generar el veredicto");
-
-      // Aquí abriremos una ventana modal o cambiaremos la vista con el texto final generado
-      console.log(result.veredicto);
-      alert("¡Veredicto generado con éxito! Revisa la consola (F12) para ver el texto crudo.");
-      
-      btn.innerText = "Generar Veredicto Final ✨";
-      btn.classList.add('active');
-
-    } catch(err) {
-      alert("Error al redactar: " + err.message);
-      btn.innerText = "Intentar de nuevo";
-      btn.classList.add('active');
-    }
-  }
-// Modificamos la función para que abra el modal en lugar del alert
+  // Recolectar datos y enviar al nuevo endpoint (Versión Final con Modal)
   async function generarVeredicto() {
     const btn = document.getElementById('btn-generar');
     btn.innerText = "Redactando informe...";
