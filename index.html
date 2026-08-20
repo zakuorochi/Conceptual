@@ -89,6 +89,58 @@
       box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
       z-index: 10;
     }
+    /* --- MODAL DE VEREDICTO --- */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.7); display: none;
+      align-items: center; justify-content: center; z-index: 50;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal-content {
+      background: white; width: 90%; max-width: 800px;
+      border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      display: flex; flex-direction: column; max-height: 90vh;
+    }
+    
+    .modal-header {
+      padding: 24px; border-bottom: 1px solid var(--border-color);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    
+    .modal-header h2 { font-size: 1.25rem; color: var(--text-primary); }
+    
+    .btn-close {
+      background: none; border: none; font-size: 1.5rem;
+      color: var(--text-secondary); cursor: pointer;
+    }
+    
+    .modal-body {
+      padding: 24px; overflow-y: auto; flex: 1;
+      background: #f8fafc;
+    }
+    
+    .dictamen-texto {
+      background: white; padding: 40px; border: 1px solid #e2e8f0;
+      border-radius: 8px; font-family: 'Times New Roman', Times, serif;
+      font-size: 1.1rem; line-height: 1.8; color: #000;
+      min-height: 400px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      outline: none; /* Quita el borde azul al hacer clic para editar */
+    }
+    
+    .modal-footer {
+      padding: 24px; border-top: 1px solid var(--border-color);
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
+    
+    .btn-export {
+      padding: 12px 24px; background-color: #10b981; color: white;
+      border: none; border-radius: 8px; font-weight: 600; font-size: 1rem;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s;
+    }
+    
+    .btn-export:hover { background-color: #059669; }
     
     .btn-veredicto {
       padding: 14px 28px; background-color: var(--accent); color: white;
@@ -145,6 +197,33 @@
         Generar Veredicto Final ✨
       </button>
     </div>
+<!-- MODAL DE VEREDICTO FINAL -->
+    <div class="modal-overlay" id="modal-veredicto">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Dictamen de Evaluación</h2>
+          <button class="btn-close" onclick="cerrarModal()">✕</button>
+        </div>
+        
+        <div class="modal-body">
+          <p style="margin-bottom: 12px; font-size: 0.9rem; color: var(--text-secondary);">
+            Revisa y edita el texto si lo deseas antes de exportarlo.
+          </p>
+          <!-- Atributo contenteditable permite al profesor escribir directamente sobre el div -->
+          <div id="texto-veredicto" class="dictamen-texto" contenteditable="true">
+            Cargando veredicto...
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn-print" style="background-color: #64748b;" onclick="cerrarModal()">Cerrar</button>
+          <button class="btn-export" onclick="exportarWord()">
+            <span>📄</span> Descargar en Word
+          </button>
+        </div>
+      </div>
+    </div>
+    
   </main>
 
 <script>
@@ -332,6 +411,82 @@
       btn.classList.add('active');
     }
   }
+// Modificamos la función para que abra el modal en lugar del alert
+  async function generarVeredicto() {
+    const btn = document.getElementById('btn-generar');
+    btn.innerText = "Redactando informe...";
+    btn.classList.remove('active');
+
+    let calificaciones = {};
+    secciones.forEach(sec => {
+      const valor = document.querySelector(`input[name="${sec.id}"]:checked`).value;
+      calificaciones[sec.id] = parseInt(valor);
+    });
+
+    const payload = {
+      analisisOriginal: currentAnalysisData,
+      calificaciones: calificaciones
+    };
+
+    try {
+      const response = await fetch('/api/generar-calificacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error("Fallo al generar el veredicto");
+
+      // Insertar el texto generado en el modal (respetando los saltos de línea y negritas)
+      // Convertimos el Markdown básico de Gemini a HTML
+      let htmlVeredicto = result.veredicto
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+      document.getElementById('texto-veredicto').innerHTML = htmlVeredicto;
+      
+      // Mostrar el modal
+      document.getElementById('modal-veredicto').style.display = 'flex';
+      
+      // Restaurar el botón original
+      btn.innerText = "Generar Veredicto Final ✨";
+      btn.classList.add('active');
+
+    } catch(err) {
+      alert("Error al redactar: " + err.message);
+      btn.innerText = "Intentar de nuevo";
+      btn.classList.add('active');
+    }
+  }
+
+  // Funciones de control del Modal
+  function cerrarModal() {
+    document.getElementById('modal-veredicto').style.display = 'none';
+  }
+
+  // Función mágica para exportar el HTML editable a un archivo Word (.doc)
+  function exportarWord() {
+    const fileName = document.getElementById('current-doc-title').innerText.replace('.pdf', '') + '_Veredicto.doc';
+    const contenidoHTML = document.getElementById('texto-veredicto').innerHTML;
+    
+    // Encabezado estándar de Microsoft Word para reconocer el HTML como documento
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Dictamen de Evaluación</title></head><body>";
+    const footer = "</body></html>";
+    const sourceHTML = header + contenidoHTML + footer;
+    
+    // Crear el archivo virtual en el navegador
+    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    const fileDownload = document.createElement("a");
+    
+    // Simular el clic para descargar
+    document.body.appendChild(fileDownload);
+    fileDownload.href = source;
+    fileDownload.download = fileName;
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
+  }
+  
 </script>
 </body>
 </html>
